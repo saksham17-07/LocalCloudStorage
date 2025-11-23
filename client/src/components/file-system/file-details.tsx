@@ -10,9 +10,11 @@ interface FileDetailsProps {
   file: FileItem | null;
   onClose: () => void;
   onToggleStar: (fileId: string) => void;
+  onDownload: (file: FileItem) => void;
+  onShare: (file: FileItem) => void;
 }
 
-export function FileDetails({ file, onClose, onToggleStar }: FileDetailsProps) {
+export function FileDetails({ file, onClose, onToggleStar, onDownload, onShare }: FileDetailsProps) {
   if (!file) return null;
 
   const Icon = getIconForType(file.type);
@@ -47,10 +49,10 @@ export function FileDetails({ file, onClose, onToggleStar }: FileDetailsProps) {
            <Button variant="outline" size="icon" onClick={() => onToggleStar(file.id)}>
             <Star className={cn("h-4 w-4", file.starred ? "fill-yellow-400 text-yellow-400" : "")} />
           </Button>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" onClick={() => onShare(file)}>
             <Share2 className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" onClick={() => onDownload(file)}>
             <Download className="h-4 w-4" />
           </Button>
         </div>

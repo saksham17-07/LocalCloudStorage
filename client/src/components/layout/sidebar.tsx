@@ -9,15 +9,28 @@ interface SidebarProps {
   onTabChange: (tab: string) => void;
   onSettingsClick: () => void;
   onLogoutClick: () => void;
+  storageUsed: number; // in MB
+  storageLimit: number; // in MB
 }
 
-export function Sidebar({ activeTab, onTabChange, onSettingsClick, onLogoutClick }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, onSettingsClick, onLogoutClick, storageUsed, storageLimit }: SidebarProps) {
   const navItems = [
     { id: 'my-drive', label: 'My Drive', icon: HardDrive },
     { id: 'recent', label: 'Recent', icon: Clock },
     { id: 'starred', label: 'Starred', icon: Star },
     { id: 'trash', label: 'Trash', icon: Trash2 },
   ];
+
+  // Convert MB to GB for display if > 1024
+  const usedDisplay = storageUsed > 1024 
+    ? `${(storageUsed / 1024).toFixed(1)} GB` 
+    : `${Math.ceil(storageUsed)} MB`;
+    
+  const limitDisplay = storageLimit > 1024 
+    ? `${(storageLimit / 1024).toFixed(0)} GB` 
+    : `${storageLimit} MB`;
+
+  const percentage = Math.min((storageUsed / storageLimit) * 100, 100);
 
   return (
     <aside className="w-64 border-r bg-sidebar flex flex-col h-full">
@@ -53,9 +66,9 @@ export function Sidebar({ activeTab, onTabChange, onSettingsClick, onLogoutClick
         <div className="mt-8 px-3">
           <div className="flex items-center justify-between text-xs font-medium mb-2 text-muted-foreground">
             <span>Storage</span>
-            <span>7.5 GB / 15 GB</span>
+            <span>{usedDisplay} / {limitDisplay}</span>
           </div>
-          <Progress value={50} className="h-2" />
+          <Progress value={percentage} className="h-2" />
         </div>
       </div>
 

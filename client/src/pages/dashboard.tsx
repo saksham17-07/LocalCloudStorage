@@ -21,14 +21,44 @@ export default function Dashboard() {
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [user, setUser] = useState({ name: "Guest User", email: "guest@example.com" });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [, setLocation] = useLocation();
+
+  // Calculate Storage
+  const calculateStorage = () => {
+    // Mock calculation: Sum up mock sizes
+    // For mock data, we'll assume some random sizes if string is not parsable
+    let totalMB = 0;
+    files.forEach(f => {
+      if (f.trashed) return; // Don't count trash? Or do? Usually trash counts. Let's count it.
+      
+      if (f.size.endsWith('MB')) {
+        totalMB += parseFloat(f.size);
+      } else if (f.size.endsWith('KB')) {
+        totalMB += parseFloat(f.size) / 1024;
+      } else if (f.size.endsWith('GB')) {
+        totalMB += parseFloat(f.size) * 1024;
+      }
+    });
+    // Add base usage for "Project Alpha" mock items that have '--'
+    totalMB += 150; 
+    return totalMB;
+  };
+
+  const storageUsed = calculateStorage();
+  const storageLimit = 15 * 1024; // 15 GB in MB
 
   // Auth Check
   useEffect(() => {
     const isAuthenticated = localStorage.getItem("isAuthenticated");
     if (!isAuthenticated) {
       setLocation("/auth");
+    } else {
+      setUser({
+        name: localStorage.getItem("userName") || "User",
+        email: localStorage.getItem("userEmail") || "user@example.com"
+      });
     }
   }, [setLocation]);
 
@@ -86,6 +116,34 @@ export default function Dashboard() {
     }
   };
 
+  // --- New Handlers for Download and Share ---
+
+  const handleDownload = (file: FileItem) => {
+    if (file.type === 'folder') {
+        toast.error("Cannot download folders in this prototype.");
+        return;
+    }
+    
+    toast.success(`Downloading ${file.name}...`, {
+        description: "File download started."
+    });
+
+    // Simulate download delay
+    setTimeout(() => {
+        toast.success("Download complete!");
+    }, 2000);
+  };
+
+  const handleShare = (file: FileItem) => {
+    const shareLink = `https://minicloud.app/share/${file.id}`;
+    navigator.clipboard.writeText(shareLink);
+    toast.success("Link copied to clipboard!", {
+        description: "Anyone with the link can view this file."
+    });
+  };
+
+  // -------------------------------------------
+
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
@@ -93,6 +151,7 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
     toast.info("Logging out...");
     setTimeout(() => setLocation("/auth"), 500);
   };
@@ -186,6 +245,8 @@ export default function Dashboard() {
         onTabChange={(tab) => { setActiveTab(tab); setCurrentFolderId(null); setSelectedFile(null); setSearchQuery(''); }} 
         onSettingsClick={() => setShowSettings(true)}
         onLogoutClick={handleLogout}
+        storageUsed={storageUsed}
+        storageLimit={storageLimit}
       />
       
       <div className="flex-1 flex flex-col min-w-0">
@@ -198,6 +259,8 @@ export default function Dashboard() {
           onViewModeChange={setViewMode}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onLogout={handleLogout}
+          currentUser={user}
         />
         
         <input 
@@ -240,6 +303,8 @@ export default function Dashboard() {
                             onToggleStar={handleToggleStar}
                             onSelect={handleSelectFile}
                             selected={selectedFile?.id === file.id}
+                            onDownload={handleDownload}
+                            onShare={handleShare}
                           />
                           {activeTab === 'trash' && (
                              <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -278,6 +343,8 @@ export default function Dashboard() {
                               onToggleStar={handleToggleStar}
                               onSelect={handleSelectFile}
                               selected={selectedFile?.id === file.id}
+                              onDownload={handleDownload}
+                              onShare={handleShare}
                             />
                              {activeTab === 'trash' && (
                                <div className="absolute right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -334,6 +401,8 @@ export default function Dashboard() {
                 file={selectedFile} 
                 onClose={() => setSelectedFile(null)} 
                 onToggleStar={handleToggleStar}
+                onDownload={handleDownload}
+                onShare={handleShare}
               />
             )}
           </AnimatePresence>

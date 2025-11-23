@@ -17,10 +17,12 @@ interface FileListItemProps {
   onDelete: (fileId: string) => void;
   onToggleStar: (fileId: string) => void;
   onSelect: (file: FileItem) => void;
+  onDownload: (file: FileItem) => void;
+  onShare: (file: FileItem) => void;
   selected: boolean;
 }
 
-export function FileListItem({ file, onNavigate, onDelete, onToggleStar, onSelect, selected }: FileListItemProps) {
+export function FileListItem({ file, onNavigate, onDelete, onToggleStar, onSelect, onDownload, onShare, selected }: FileListItemProps) {
   const Icon = getIconForType(file.type);
   const iconColor = getColorForType(file.type);
 
@@ -78,10 +80,10 @@ export function FileListItem({ file, onNavigate, onDelete, onToggleStar, onSelec
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onToggleStar(file.id); }}>
               <Star className="h-4 w-4 mr-2" /> {file.starred ? 'Unstar' : 'Star'}
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onShare(file); }}>
               <Share2 className="h-4 w-4 mr-2" /> Share
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDownload(file); }}>
               <Download className="h-4 w-4 mr-2" /> Download
             </DropdownMenuItem>
             <DropdownMenuSeparator />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Plus, Bell, User, ChevronRight, Folder, LayoutGrid, List } from 'lucide-react';
+import { Search, Plus, Bell, User, ChevronRight, Folder, LayoutGrid, List, LogOut, UserPlus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -21,6 +22,8 @@ interface HeaderProps {
   onViewModeChange: (mode: 'grid' | 'list') => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  onLogout: () => void;
+  currentUser: { name: string; email: string };
 }
 
 export function Header({ 
@@ -31,7 +34,9 @@ export function Header({
   viewMode, 
   onViewModeChange,
   searchQuery,
-  onSearchChange
+  onSearchChange,
+  onLogout,
+  currentUser
 }: HeaderProps) {
   return (
     <header className="h-16 border-b bg-background px-6 flex items-center justify-between gap-4">
@@ -115,10 +120,46 @@ export function Header({
           <Bell className="h-5 w-5" />
         </Button>
 
-        <Avatar className="h-8 w-8 border cursor-pointer">
-          <AvatarImage src="https://github.com/shadcn.png" />
-          <AvatarFallback>JD</AvatarFallback>
-        </Avatar>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Avatar className="h-8 w-8 border cursor-pointer ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
+              <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.name}`} />
+              <AvatarFallback>{currentUser.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{currentUser.name}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {currentUser.email}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem className="gap-2 bg-muted/50">
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.name}`} />
+                  <AvatarFallback>ME</AvatarFallback>
+                </Avatar>
+                <span className="truncate flex-1">{currentUser.email}</span>
+                <Check className="h-4 w-4 ml-auto" />
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" disabled>
+                <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center">
+                  <User className="h-3 w-3 text-muted-foreground" />
+                </div>
+                <span>Add another account</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onLogout} className="text-destructive focus:text-destructive">
+              <LogOut className="mr-2 h-4 w-4" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
