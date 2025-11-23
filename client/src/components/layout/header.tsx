@@ -38,6 +38,7 @@ export function Header({
   onLogout,
   currentUser
 }: HeaderProps) {
+  const user = currentUser || { name: "User", email: "user@example.com" };
   return (
     <header className="h-16 border-b bg-background px-6 flex items-center justify-between gap-4">
       <div className="flex items-center gap-2 flex-1 overflow-hidden">
@@ -123,16 +124,16 @@ export function Header({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="h-8 w-8 border cursor-pointer ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
-              <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.name}`} />
-              <AvatarFallback>{currentUser.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} />
+              <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{currentUser.name}</p>
+                <p className="text-sm font-medium leading-none">{user.name}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {currentUser.email}
+                  {user.email}
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -140,10 +141,10 @@ export function Header({
             <DropdownMenuGroup>
               <DropdownMenuItem className="gap-2 bg-muted/50">
                 <Avatar className="h-5 w-5">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.name}`} />
+                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} />
                   <AvatarFallback>ME</AvatarFallback>
                 </Avatar>
-                <span className="truncate flex-1">{currentUser.email}</span>
+                <span className="truncate flex-1">{user.email}</span>
                 <Check className="h-4 w-4 ml-auto" />
               </DropdownMenuItem>
               <DropdownMenuItem className="gap-2" disabled>

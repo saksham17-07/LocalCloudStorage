@@ -20,7 +20,7 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem storageKey="vite-ui-theme">
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
