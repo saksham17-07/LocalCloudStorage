@@ -1,14 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useLocation } from "wouter";
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { FileCard } from '@/components/file-system/file-card';
 import { FileListItem } from '@/components/file-system/file-list-item';
 import { FileDetails } from '@/components/file-system/file-details';
+import { SettingsModal } from '@/components/modals/settings-modal';
 import { mockFiles, FileItem, FileType } from '@/lib/mock-data';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { AnimatePresence, motion } from 'framer-motion';
-import { FolderOpen, UploadCloud, FileQuestion, Trash, RefreshCcw, Ban } from 'lucide-react';
+import { FolderOpen, UploadCloud, FileQuestion, Trash, RefreshCcw, Ban, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Dashboard() {
@@ -17,7 +19,18 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('my-drive');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [, setLocation] = useLocation();
+
+  // Auth Check
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem("isAuthenticated");
+    if (!isAuthenticated) {
+      setLocation("/auth");
+    }
+  }, [setLocation]);
 
   // Breadcrumbs logic
   const getBreadcrumbs = () => {
@@ -39,6 +52,7 @@ export default function Dashboard() {
   const handleNavigate = (folderId: string | null) => {
     setCurrentFolderId(folderId);
     setSelectedFile(null);
+    setSearchQuery(''); // Clear search when navigating
   };
 
   const handleDelete = (fileId: string) => {
@@ -76,11 +90,17 @@ export default function Dashboard() {
     fileInputRef.current?.click();
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userEmail");
+    toast.info("Logging out...");
+    setTimeout(() => setLocation("/auth"), 500);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       
-      // Map MIME types to our FileType
       let type: FileType = 'doc';
       if (file.type.startsWith('image/')) type = 'image';
       else if (file.type.startsWith('video/')) type = 'video';
@@ -88,7 +108,6 @@ export default function Dashboard() {
       else if (file.type === 'application/pdf') type = 'pdf';
       else if (file.type.includes('zip') || file.type.includes('rar') || file.type.includes('tar')) type = 'archive';
 
-      // Format size
       const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
       const sizeStr = parseFloat(sizeInMB) < 1 ? `${(file.size / 1024).toFixed(1)} KB` : `${sizeInMB} MB`;
 
@@ -106,7 +125,6 @@ export default function Dashboard() {
       setFiles(prev => [...prev, newFile]);
       toast.success("Upload complete");
       
-      // Reset input
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -138,11 +156,17 @@ export default function Dashboard() {
 
   // Filtering logic
   const filteredFiles = files.filter(file => {
+    // Global Search Filter
+    if (searchQuery) {
+      return file.name.toLowerCase().includes(searchQuery.toLowerCase()) && !file.trashed;
+    }
+
+    // Tab Filters
     if (activeTab === 'trash') return file.trashed;
-    if (file.trashed) return false; // Hide trashed files from other views
+    if (file.trashed) return false;
 
     if (activeTab === 'starred') return file.starred;
-    if (activeTab === 'recent') return true; // Show all sorted by date (mock)
+    if (activeTab === 'recent') return true; 
     
     // Default: My Drive (Hierarchical view)
     return file.parentId === currentFolderId || (currentFolderId === null && !file.parentId && file.parentId !== 'root'); 
@@ -157,7 +181,12 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans">
-      <Sidebar activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setCurrentFolderId(null); setSelectedFile(null); }} />
+      <Sidebar 
+        activeTab={activeTab} 
+        onTabChange={(tab) => { setActiveTab(tab); setCurrentFolderId(null); setSelectedFile(null); setSearchQuery(''); }} 
+        onSettingsClick={() => setShowSettings(true)}
+        onLogoutClick={handleLogout}
+      />
       
       <div className="flex-1 flex flex-col min-w-0">
         <Header 
@@ -167,9 +196,10 @@ export default function Dashboard() {
           onNavigate={handleNavigate}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
         
-        {/* Hidden File Input */}
         <input 
           type="file" 
           ref={fileInputRef} 
@@ -185,8 +215,15 @@ export default function Dashboard() {
             {sortedFiles.length > 0 ? (
               <div onClick={handleBackgroundClick}>
                 <div className="flex items-center justify-between mb-4">
-                   <h2 className="text-lg font-semibold capitalize">
-                    {activeTab === 'my-drive' ? (currentFolderId ? files.find(f => f.id === currentFolderId)?.name : 'My Drive') : activeTab}
+                   <h2 className="text-lg font-semibold capitalize flex items-center gap-2">
+                    {searchQuery ? (
+                      <>
+                        <Search className="h-5 w-5 text-primary" />
+                        Search results for "{searchQuery}"
+                      </>
+                    ) : (
+                      activeTab === 'my-drive' ? (currentFolderId ? files.find(f => f.id === currentFolderId)?.name : 'My Drive') : activeTab
+                    )}
                   </h2>
                   <span className="text-sm text-muted-foreground">{sortedFiles.length} items</span>
                 </div>
@@ -263,7 +300,15 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-                {activeTab === 'trash' ? (
+                {searchQuery ? (
+                  <>
+                    <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                      <Search className="h-8 w-8 opacity-50" />
+                    </div>
+                    <p className="text-lg font-medium">No results found for "{searchQuery}"</p>
+                    <p className="text-sm text-muted-foreground">Try checking your spelling or using different keywords</p>
+                  </>
+                ) : activeTab === 'trash' ? (
                   <>
                     <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
                       <Trash className="h-8 w-8 opacity-50" />
@@ -294,6 +339,8 @@ export default function Dashboard() {
           </AnimatePresence>
         </div>
       </div>
+      
+      <SettingsModal open={showSettings} onOpenChange={setShowSettings} />
       <Toaster position="bottom-right" />
     </div>
   );

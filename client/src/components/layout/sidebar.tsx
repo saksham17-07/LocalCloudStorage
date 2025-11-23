@@ -7,9 +7,11 @@ import { cn } from '@/lib/utils';
 interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onSettingsClick: () => void;
+  onLogoutClick: () => void;
 }
 
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, onSettingsClick, onLogoutClick }: SidebarProps) {
   const navItems = [
     { id: 'my-drive', label: 'My Drive', icon: HardDrive },
     { id: 'recent', label: 'Recent', icon: Clock },
@@ -58,11 +60,19 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       </div>
 
       <div className="p-4 border-t space-y-1">
-        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start gap-3 text-muted-foreground"
+          onClick={onSettingsClick}
+        >
           <Settings className="h-4 w-4" />
           Settings
         </Button>
-        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          onClick={onLogoutClick}
+        >
           <LogOut className="h-4 w-4" />
           Logout
         </Button>

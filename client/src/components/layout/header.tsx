@@ -19,9 +19,20 @@ interface HeaderProps {
   onNavigate: (id: string | null) => void;
   viewMode: 'grid' | 'list';
   onViewModeChange: (mode: 'grid' | 'list') => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
 }
 
-export function Header({ onUpload, onNewFolder, breadcrumbs, onNavigate, viewMode, onViewModeChange }: HeaderProps) {
+export function Header({ 
+  onUpload, 
+  onNewFolder, 
+  breadcrumbs, 
+  onNavigate, 
+  viewMode, 
+  onViewModeChange,
+  searchQuery,
+  onSearchChange
+}: HeaderProps) {
   return (
     <header className="h-16 border-b bg-background px-6 flex items-center justify-between gap-4">
       <div className="flex items-center gap-2 flex-1 overflow-hidden">
@@ -57,6 +68,8 @@ export function Header({ onUpload, onNewFolder, breadcrumbs, onNavigate, viewMod
           <Input 
             placeholder="Search in Drive" 
             className="pl-9 bg-muted/40 border-none focus-visible:ring-1 focus-visible:bg-background transition-all" 
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
       </div>
