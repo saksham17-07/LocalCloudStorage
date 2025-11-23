@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { FileCard } from '@/components/file-system/file-card';
 import { FileListItem } from '@/components/file-system/file-list-item';
 import { FileDetails } from '@/components/file-system/file-details';
-import { mockFiles, FileItem } from '@/lib/mock-data';
+import { mockFiles, FileItem, FileType } from '@/lib/mock-data';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { AnimatePresence, motion } from 'framer-motion';
-import { FolderOpen, UploadCloud, FileQuestion, Trash } from 'lucide-react';
+import { FolderOpen, UploadCloud, FileQuestion, Trash, RefreshCcw, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Dashboard() {
@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('my-drive');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Breadcrumbs logic
   const getBreadcrumbs = () => {
@@ -41,9 +42,25 @@ export default function Dashboard() {
   };
 
   const handleDelete = (fileId: string) => {
+    setFiles(prev => prev.map(f => f.id === fileId ? { ...f, trashed: true } : f));
+    if (selectedFile?.id === fileId) setSelectedFile(null);
+    toast.success("Item moved to trash", {
+      action: {
+        label: "Undo",
+        onClick: () => handleRestore(fileId)
+      }
+    });
+  };
+
+  const handleRestore = (fileId: string) => {
+    setFiles(prev => prev.map(f => f.id === fileId ? { ...f, trashed: false } : f));
+    toast.success("Item restored");
+  };
+
+  const handleDeleteForever = (fileId: string) => {
     setFiles(prev => prev.filter(f => f.id !== fileId));
     if (selectedFile?.id === fileId) setSelectedFile(null);
-    toast.success("Item moved to trash");
+    toast.success("Item permanently deleted");
   };
 
   const handleToggleStar = (fileId: string) => {
@@ -55,24 +72,43 @@ export default function Dashboard() {
     }
   };
 
-  const handleUpload = () => {
-    toast.info("Uploading simulation...", {
-      description: "Adding 'New Document.docx' to current folder."
-    });
-    
-    setTimeout(() => {
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      
+      // Map MIME types to our FileType
+      let type: FileType = 'doc';
+      if (file.type.startsWith('image/')) type = 'image';
+      else if (file.type.startsWith('video/')) type = 'video';
+      else if (file.type.startsWith('audio/')) type = 'audio';
+      else if (file.type === 'application/pdf') type = 'pdf';
+      else if (file.type.includes('zip') || file.type.includes('rar') || file.type.includes('tar')) type = 'archive';
+
+      // Format size
+      const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+      const sizeStr = parseFloat(sizeInMB) < 1 ? `${(file.size / 1024).toFixed(1)} KB` : `${sizeInMB} MB`;
+
       const newFile: FileItem = {
         id: Math.random().toString(36).substr(2, 9),
-        name: `New Upload ${Math.floor(Math.random() * 100)}.jpg`,
-        type: 'image',
-        size: '2.5 MB',
+        name: file.name,
+        type: type,
+        size: sizeStr,
         modified: new Date().toISOString().split('T')[0],
         starred: false,
-        parentId: currentFolderId
+        parentId: currentFolderId,
+        trashed: false
       };
+
       setFiles(prev => [...prev, newFile]);
       toast.success("Upload complete");
-    }, 1000);
+      
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleNewFolder = () => {
@@ -83,7 +119,8 @@ export default function Dashboard() {
       size: '--',
       modified: new Date().toISOString().split('T')[0],
       starred: false,
-      parentId: currentFolderId
+      parentId: currentFolderId,
+      trashed: false
     };
     setFiles(prev => [...prev, newFolder]);
     toast.success("Folder created");
@@ -101,9 +138,11 @@ export default function Dashboard() {
 
   // Filtering logic
   const filteredFiles = files.filter(file => {
+    if (activeTab === 'trash') return file.trashed;
+    if (file.trashed) return false; // Hide trashed files from other views
+
     if (activeTab === 'starred') return file.starred;
     if (activeTab === 'recent') return true; // Show all sorted by date (mock)
-    if (activeTab === 'trash') return false; // Mock empty trash for now
     
     // Default: My Drive (Hierarchical view)
     return file.parentId === currentFolderId || (currentFolderId === null && !file.parentId && file.parentId !== 'root'); 
@@ -122,12 +161,20 @@ export default function Dashboard() {
       
       <div className="flex-1 flex flex-col min-w-0">
         <Header 
-          onUpload={handleUpload} 
+          onUpload={handleUploadClick} 
           onNewFolder={handleNewFolder}
           breadcrumbs={getBreadcrumbs()}
           onNavigate={handleNavigate}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+        />
+        
+        {/* Hidden File Input */}
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          onChange={handleFileChange} 
         />
         
         <div className="flex-1 flex overflow-hidden">
@@ -148,15 +195,29 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     <AnimatePresence mode='popLayout'>
                       {sortedFiles.map((file) => (
-                        <FileCard 
-                          key={file.id} 
-                          file={file} 
-                          onNavigate={handleNavigate}
-                          onDelete={handleDelete}
-                          onToggleStar={handleToggleStar}
-                          onSelect={handleSelectFile}
-                          selected={selectedFile?.id === file.id}
-                        />
+                        <div key={file.id} className="relative group">
+                          <FileCard 
+                            file={file} 
+                            onNavigate={handleNavigate}
+                            onDelete={activeTab === 'trash' ? handleDeleteForever : handleDelete}
+                            onToggleStar={handleToggleStar}
+                            onSelect={handleSelectFile}
+                            selected={selectedFile?.id === file.id}
+                          />
+                          {activeTab === 'trash' && (
+                             <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                               <Button 
+                                 size="icon" 
+                                 variant="secondary" 
+                                 className="h-6 w-6"
+                                 onClick={(e) => { e.stopPropagation(); handleRestore(file.id); }}
+                                 title="Restore"
+                               >
+                                 <RefreshCcw className="h-3 w-3" />
+                               </Button>
+                             </div>
+                          )}
+                        </div>
                       ))}
                     </AnimatePresence>
                   </div>
@@ -172,15 +233,28 @@ export default function Dashboard() {
                     <div className="divide-y">
                       <AnimatePresence mode='popLayout'>
                         {sortedFiles.map((file) => (
-                          <FileListItem 
-                            key={file.id} 
-                            file={file} 
-                            onNavigate={handleNavigate}
-                            onDelete={handleDelete}
-                            onToggleStar={handleToggleStar}
-                            onSelect={handleSelectFile}
-                            selected={selectedFile?.id === file.id}
-                          />
+                          <div key={file.id} className="group relative">
+                             <FileListItem 
+                              file={file} 
+                              onNavigate={handleNavigate}
+                              onDelete={activeTab === 'trash' ? handleDeleteForever : handleDelete}
+                              onToggleStar={handleToggleStar}
+                              onSelect={handleSelectFile}
+                              selected={selectedFile?.id === file.id}
+                            />
+                             {activeTab === 'trash' && (
+                               <div className="absolute right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button 
+                                   size="sm" 
+                                   variant="ghost" 
+                                   className="h-7 text-xs"
+                                   onClick={(e) => { e.stopPropagation(); handleRestore(file.id); }}
+                                 >
+                                   Restore
+                                 </Button>
+                               </div>
+                             )}
+                          </div>
                         ))}
                       </AnimatePresence>
                     </div>
@@ -202,7 +276,7 @@ export default function Dashboard() {
                       <FolderOpen className="h-8 w-8 opacity-50" />
                     </div>
                     <p className="text-lg font-medium">This folder is empty</p>
-                    <Button variant="link" onClick={handleUpload}>Upload a file</Button>
+                    <Button variant="link" onClick={handleUploadClick}>Upload a file</Button>
                   </>
                 )}
               </div>

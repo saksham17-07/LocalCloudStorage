@@ -11,21 +11,22 @@ export interface FileItem {
   starred: boolean;
   shared?: boolean;
   parentId?: string | null; // For folder hierarchy
+  trashed?: boolean; // New field for trash functionality
 }
 
 export const mockFiles: FileItem[] = [
-  { id: '1', name: 'Project Alpha', type: 'folder', size: '--', modified: '2025-01-15', starred: true, parentId: null },
-  { id: '2', name: 'Design Assets', type: 'folder', size: '--', modified: '2025-01-10', starred: false, parentId: null },
-  { id: '3', name: 'Q4 Report.pdf', type: 'pdf', size: '2.4 MB', modified: '2025-01-20', starred: true, parentId: null },
-  { id: '4', name: 'Team Photo.jpg', type: 'image', size: '4.1 MB', modified: '2025-01-18', starred: false, parentId: null },
-  { id: '5', name: 'Budget 2025.xlsx', type: 'doc', size: '1.2 MB', modified: '2025-01-22', starred: false, parentId: null },
-  { id: '6', name: 'Intro Music.mp3', type: 'audio', size: '8.5 MB', modified: '2025-01-05', starred: false, parentId: null },
-  { id: '7', name: 'Demo Recording.mp4', type: 'video', size: '124 MB', modified: '2025-01-21', starred: false, parentId: null },
-  { id: '8', name: 'Source Code.zip', type: 'archive', size: '45 MB', modified: '2025-01-12', starred: false, parentId: null },
+  { id: '1', name: 'Project Alpha', type: 'folder', size: '--', modified: '2025-01-15', starred: true, parentId: null, trashed: false },
+  { id: '2', name: 'Design Assets', type: 'folder', size: '--', modified: '2025-01-10', starred: false, parentId: null, trashed: false },
+  { id: '3', name: 'Q4 Report.pdf', type: 'pdf', size: '2.4 MB', modified: '2025-01-20', starred: true, parentId: null, trashed: false },
+  { id: '4', name: 'Team Photo.jpg', type: 'image', size: '4.1 MB', modified: '2025-01-18', starred: false, parentId: null, trashed: false },
+  { id: '5', name: 'Budget 2025.xlsx', type: 'doc', size: '1.2 MB', modified: '2025-01-22', starred: false, parentId: null, trashed: false },
+  { id: '6', name: 'Intro Music.mp3', type: 'audio', size: '8.5 MB', modified: '2025-01-05', starred: false, parentId: null, trashed: false },
+  { id: '7', name: 'Demo Recording.mp4', type: 'video', size: '124 MB', modified: '2025-01-21', starred: false, parentId: null, trashed: false },
+  { id: '8', name: 'Source Code.zip', type: 'archive', size: '45 MB', modified: '2025-01-12', starred: false, parentId: null, trashed: false },
   
   // Inside Project Alpha (id: 1)
-  { id: '11', name: 'Wireframes', type: 'folder', size: '--', modified: '2025-01-15', starred: false, parentId: '1' },
-  { id: '12', name: 'Specs.docx', type: 'doc', size: '500 KB', modified: '2025-01-16', starred: false, parentId: '1' },
+  { id: '11', name: 'Wireframes', type: 'folder', size: '--', modified: '2025-01-15', starred: false, parentId: '1', trashed: false },
+  { id: '12', name: 'Specs.docx', type: 'doc', size: '500 KB', modified: '2025-01-16', starred: false, parentId: '1', trashed: false },
 ];
 
 export const getIconForType = (type: FileType) => {
