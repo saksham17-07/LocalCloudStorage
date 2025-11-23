@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Plus, Bell, User, ChevronRight, Folder } from 'lucide-react';
+import { Search, Plus, Bell, User, ChevronRight, Folder, LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,9 +17,11 @@ interface HeaderProps {
   onNewFolder: () => void;
   breadcrumbs: { id: string; name: string }[];
   onNavigate: (id: string | null) => void;
+  viewMode: 'grid' | 'list';
+  onViewModeChange: (mode: 'grid' | 'list') => void;
 }
 
-export function Header({ onUpload, onNewFolder, breadcrumbs, onNavigate }: HeaderProps) {
+export function Header({ onUpload, onNewFolder, breadcrumbs, onNavigate, viewMode, onViewModeChange }: HeaderProps) {
   return (
     <header className="h-16 border-b bg-background px-6 flex items-center justify-between gap-4">
       <div className="flex items-center gap-2 flex-1 overflow-hidden">
@@ -60,6 +62,25 @@ export function Header({ onUpload, onNewFolder, breadcrumbs, onNavigate }: Heade
       </div>
 
       <div className="flex items-center gap-3 pl-4">
+        <div className="flex items-center bg-muted/50 rounded-lg p-0.5 border">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`h-7 w-7 rounded-md ${viewMode === 'list' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            onClick={() => onViewModeChange('list')}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`h-7 w-7 rounded-md ${viewMode === 'grid' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            onClick={() => onViewModeChange('grid')}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+        </div>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button className="gap-2 shadow-sm active-elevate">

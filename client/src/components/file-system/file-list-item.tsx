@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
-interface FileCardProps {
+interface FileListItemProps {
   file: FileItem;
   onNavigate: (folderId: string) => void;
   onDelete: (fileId: string) => void;
@@ -20,7 +20,7 @@ interface FileCardProps {
   selected: boolean;
 }
 
-export function FileCard({ file, onNavigate, onDelete, onToggleStar, onSelect, selected }: FileCardProps) {
+export function FileListItem({ file, onNavigate, onDelete, onToggleStar, onSelect, selected }: FileListItemProps) {
   const Icon = getIconForType(file.type);
   const iconColor = getColorForType(file.type);
 
@@ -33,25 +33,45 @@ export function FileCard({ file, onNavigate, onDelete, onToggleStar, onSelect, s
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "group relative flex flex-col p-4 rounded-xl border bg-card hover:shadow-md transition-all duration-200 cursor-pointer select-none",
-        selected && "ring-2 ring-primary ring-offset-2 bg-primary/5"
+        "group flex items-center p-2 rounded-lg border-b last:border-none hover:bg-muted/50 transition-colors cursor-pointer select-none",
+        selected && "bg-muted"
       )}
       onClick={() => onSelect(file)}
       onDoubleClick={handleDoubleClick}
     >
-      <div className="flex justify-between items-start mb-3">
-        <div className={cn("p-2.5 rounded-lg bg-muted/50 group-hover:bg-muted transition-colors", iconColor.split(' ')[0].replace('text-', 'bg-').replace('500', '100').replace('600', '100').replace('400', '100'))}>
-          <Icon className={cn("h-6 w-6", iconColor)} />
-        </div>
-        
+      <div className="w-10 flex justify-center mr-3">
+        <Icon className={cn("h-5 w-5", iconColor)} />
+      </div>
+      
+      <div className="flex-1 min-w-0 pr-4">
+        <span className="font-medium text-sm truncate block">{file.name}</span>
+      </div>
+
+      <div className="w-32 text-xs text-muted-foreground hidden sm:block">
+        {file.modified}
+      </div>
+
+      <div className="w-20 text-xs text-muted-foreground text-right mr-4 hidden sm:block">
+        {file.size}
+      </div>
+
+      <div className="flex items-center gap-1">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className={cn("h-8 w-8", file.starred ? "text-yellow-400 opacity-100" : "opacity-0 group-hover:opacity-100 text-muted-foreground")}
+          onClick={(e) => { e.stopPropagation(); onToggleStar(file.id); }}
+        >
+          <Star className={cn("h-4 w-4", file.starred && "fill-current")} />
+        </Button>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-2">
-              <MoreVertical className="h-4 w-4 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 text-muted-foreground">
+              <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -71,20 +91,6 @@ export function FileCard({ file, onNavigate, onDelete, onToggleStar, onSelect, s
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      <div className="mt-auto">
-        <h3 className="font-medium text-sm truncate mb-1" title={file.name}>{file.name}</h3>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{file.size}</span>
-          <span>{file.modified}</span>
-        </div>
-      </div>
-
-      {file.starred && (
-        <div className="absolute top-3 right-3 text-yellow-400">
-          <Star className="h-4 w-4 fill-current" />
-        </div>
-      )}
     </motion.div>
   );
 }
